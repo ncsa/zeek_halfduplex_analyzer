@@ -2,7 +2,7 @@
 Quick and dirty script to analyze a Zeek/Bro conn.log script and outputs stats about half-duplex connections.  Can be used to troubleshoot problems with asymmetric hashing and asymmetric flows
 
 ## Background
-This script extends the functionality from the check_SAD_connections option in [bro-doctor](https://github.com/ncsa/bro-doctor/blob/master/doctor.py).  Currently only ascii (non-json) logs are supported.
+This script extends the functionality from the check_SAD_connections option in [bro-doctor](https://github.com/ncsa/bro-doctor).  Currently only ascii (non-json) logs are supported.
 
 It reads an entire conn.log file and only keeps lines that
 * Are tcp
