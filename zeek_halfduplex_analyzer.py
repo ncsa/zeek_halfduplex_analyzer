@@ -18,6 +18,10 @@ type_mapping = {
 }
 
 
+def zero_division_ok(numerator, denominator):
+    return numerator / denominator if denominator else 0
+
+
 def main():
     if len(sys.argv) < 2:
         print('No file specified to analyze', file=sys.stderr)
@@ -76,20 +80,21 @@ def main():
     print('Summary:')
     print('* {:,} total conns'.format(total_lines))
     print('* {:,} total local orig/local resp TCP conns'.format(tcp_lines))
-    print('* {:,} local TCP conns with history, {:.1%} of the total (analyzed conns)'.format(analyzed_lines, (
-                analyzed_lines / total_lines)))
-    print(
-        '* {:,} half-duplex conns, {:.1%} of the analyzed conns and {:.1%} of the total conns'.format(halfduplex_lines,
-                                                                                                      halfduplex_lines / analyzed_lines,
-                                                                                                      halfduplex_lines / total_lines))
+    print('* {:,} local TCP conns with history, {:.1%} of the total (analyzed conns)'.
+          format(analyzed_lines, (zero_division_ok(analyzed_lines, total_lines))))
+    print('* {:,} half-duplex conns, {:.1%} of the analyzed conns and {:.1%} of the total conns'.
+          format(halfduplex_lines,
+               zero_division_ok(halfduplex_lines, analyzed_lines),
+               zero_division_ok(halfduplex_lines, total_lines)))
 
     # Analyze all upper case and all lower case
     lowercase_lines = df.loc[df['history'].str.islower()].shape[0]
     uppercase_lines = df.loc[df['history'].str.isupper()].shape[0]
-    print('* {} ({:.1%}) of these are lowercase, and {} ({:.1%}) are uppercase'.format(lowercase_lines,
-                                                                                         lowercase_lines / halfduplex_lines,
-                                                                                         uppercase_lines,
-                                                                                         uppercase_lines / halfduplex_lines))
+    print('* {} ({:.1%}) of these are lowercase, and {} ({:.1%}) are uppercase'.
+          format(lowercase_lines,
+                 zero_division_ok(lowercase_lines, halfduplex_lines),
+                 uppercase_lines,
+                 zero_division_ok(uppercase_lines, halfduplex_lines)))
 
     # Make sure lowercase + uppercase equals the total number of half-duplex
     assert (halfduplex_lines == (lowercase_lines + uppercase_lines))
@@ -135,15 +140,16 @@ def main():
 
     print('\nHalf-duplex connections by NIC and process (count):')
     print(tabulate(nics_df, headers='keys', tablefmt='plain', floatfmt=',.0f'))
-    print('\nEvenly spaced average by process is {:,.1f}'.format(halfduplex_lines / (num_nics * num_procs)))
-    print('Evenly spaced average by NIC is {:,.1f}'.format(halfduplex_lines / num_nics))
+    print('\nEvenly spaced average by process is {:,.1f}'.format(
+        zero_division_ok(halfduplex_lines, (num_nics * num_procs))))
+    print('Evenly spaced average by NIC is {:,.1f}'.format(zero_division_ok(halfduplex_lines, num_nics)))
 
-    nics_df = nics_df / halfduplex_lines
+    nics_df = zero_division_ok(nics_df, halfduplex_lines)
     nics_df = nics_df.fillna(0)
     print('\nHalf-duplex connections by NIC and process (percentage):')
     print(tabulate(nics_df, headers='keys', tablefmt='plain', floatfmt='.2%'))
-    print('\nEvenly spaced average by process is {:,.1%}'.format(1 / (num_nics * num_procs)))
-    print('Evenly spaced average by NIC is {:,.1%}'.format(1 / num_nics))
+    print('\nEvenly spaced average by process is {:,.1%}'.format(zero_division_ok(1, (num_nics * num_procs))))
+    print('Evenly spaced average by NIC is {:,.1%}'.format(zero_division_ok(1, num_nics)))
 
     # See a graph by nic and process
     # axis = df.groupby(['nic', 'process'])['history'].count().unstack().plot(kind='bar', stacked=True)
@@ -173,7 +179,8 @@ def main():
 
     # Multiply by two in calculations because we need to count both sides of the connection
     print('\nHalf-duplex connections with presumably both sides seen separately:')
-    print('* {} ({:.1%}) connections'.format(merged_df.shape[0] * 2, merged_df.shape[0] * 2 / halfduplex_lines))
+    print('* {} ({:.1%}) connections'.format(merged_df.shape[0] * 2, zero_division_ok(merged_df.shape[0] * 2,
+                                                                                      halfduplex_lines)))
 
     print('* Top ten history types for conns with both sides seen:')
     hist_types = merged_df['history_x'].value_counts().to_frame()
@@ -184,4 +191,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
